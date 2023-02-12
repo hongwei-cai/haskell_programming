@@ -1,7 +1,3 @@
-import Distribution.Compat.Lens (_1)
-import qualified GHC.TypeLits as definitions
-
-
 -- 4.1 New From Old
 -- Decide if an integer is even:
 even :: Integral a => a -> Bool
@@ -29,7 +25,9 @@ signum n = if n < 0 then -1 else
 abs_g n | n >= 0        = n
         | otherwise     = -n
 
--- The symbol | is read as such that
+{- The symbol | is read as such that 
+-- the guard otherwise is defined in the standard prelude simply by 
+   otherwise = True -}
 
 signum_g n | n < 0      = -1
            | n == 0     = 0
@@ -45,17 +43,17 @@ not True = False
 True && True = True
 _ && _ = False
 
--- True && b = b
--- False && _ = False
+        {- True && b = b
+           False && _ = False -}
 
 {-Haskell does not permit the same name to be used for more than one 
 argument in a single equation.
--- invalid
-        b && b = b
-        _ && _ = False
--- valid
-        b && c | b == c         = b
-               | otherwise      = False
+        -- invalid
+                b && b = b
+                _ && _ = False
+        -- valid
+                b && c | b == c         = b
+                        | otherwise      = False
 -}
 
 
@@ -97,8 +95,9 @@ tail (_:xs) = xs
 a body that specifies how the result can be calculated in terms of the 
 arguments, but do not give a name for the function itself. Lambda expressions 
 are nameless functions.
-
-        \x -> x + x
+        The nameless function that takes a single number x as its argument, and
+        produces the result x + x.
+                \x -> x + x
 
 The symbol \ represents the Greek letter lambda, written as λ. -}
 
@@ -118,12 +117,60 @@ in turn takes another integer y and returns that result x + y. -}
 return functions as results by their very nature, rather than as a consequence
 of currying. -}
 
--- const :: a -> b -> a
--- const x _ = x
+{- The library function const that returns a constant function that always 
+produces a given value
+        -- const :: a -> b -> a
+        -- const x _ = x
+-}
 
 const :: a -> (b -> a)
 const x = \_ -> x
 
-{- Finally, lambda expressions can be used to avoid-}
+{- Finally, lambda expressions can be used to avoid having to name a function 
+that is only referenced once in a program. 
+        -- odds :: Int -> [Int]
+        -- odds n = map f [0..n-1]
+                    where f x = x*2 + 1
+-}
+
+odds :: Int -> [Int]
+odds n = map (\x -> x*2 + 1) [0..n-1]
 
 
+-- 4.6 Operator sections
+{-
+Functions such as + that are written between their two arguments are called 
+operators.
+
+Any operator can be converted into a curried function that is written before 
+its arguments by enclosing the name of the operator in parentheses, 
+as in (+) 1 2.
+
+This convention also allows one of the arguments to be included in the 
+parentheses if desired, as in (1+) 2 and (+2) 1. 
+
+In general if # is an operator, then expressions of the form (#), (x #), and 
+(# y) for arguments x and y are called sections. 
+        (#) = \x -> (\y -> x # y)
+        (x #) = \y -> x # y
+        (# y) = \x -> x # y
+
+Sections have three primary applications. 
+    First of all, they can be used to construct a number of simple but useful 
+    functions in a particularly compact way.
+        (+) is the addition function \x -> (\y -> x+y)
+        (1+) is the successor function \y -> 1+y
+        (1/) is the reciprocation function \y -> 1/y
+        (*2) is the doubling function \x -> x*2
+        (/2) is the halving function \x -> x/2
+
+    Secondly, sections are necessary when stating the type of operators, 
+    because an operator itself is not a valid expression in Haskell. 
+        (+) :: Int -> Int -> Int
+
+    Finally, sections are also necessary when using operators as arguments to 
+    other functions. 
+        sum :: [Int] -> Int
+        sum = foldl (+) 0
+
+-}
